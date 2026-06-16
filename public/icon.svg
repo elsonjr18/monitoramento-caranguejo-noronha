@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Deep Slate Background Circle -->
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%" fx="30%" fy="30%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </radialGradient>
+    <linearGradient id="crabGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="60%" stop-color="#f97316" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#000000" flood-opacity="0.30" />
+    </filter>
+  </defs>
+
+  <circle cx="256" cy="256" r="240" fill="url(#bgGrad)" />
+
+  <!-- Radar GPS grid accent lines -->
+  <circle cx="256" cy="256" r="190" fill="none" stroke="#ea580c" stroke-width="2" stroke-opacity="0.25" stroke-dasharray="10 6" />
+  <circle cx="256" cy="256" r="140" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-opacity="0.15" />
+  <line x1="256" y1="40" x2="256" y2="472" stroke="#ea580c" stroke-width="1.5" stroke-opacity="0.15" stroke-dasharray="6 6" />
+  <line x1="40" y1="256" x2="472" y2="256" stroke="#ea580c" stroke-width="1.5" stroke-opacity="0.15" stroke-dasharray="6 6" />
+
+  <!-- Crab Group -->
+  <g filter="url(#shadow)">
+    <!-- Right Legs -->
+    <path d="M 290 260 Q 380 240 370 190 Q 350 180 320 220" fill="none" stroke="url(#crabGrad)" stroke-width="14" stroke-linecap="round" />
+    <path d="M 290 275 Q 390 280 365 330 Q 330 330 310 285" fill="none" stroke="url(#crabGrad)" stroke-width="14" stroke-linecap="round" />
+    <path d="M 285 295 Q 365 340 330 390 Q 300 380 290 320" fill="none" stroke="url(#crabGrad)" stroke-width="14" stroke-linecap="round" />
+
+    <!-- Left Legs -->
+    <path d="M 222 260 Q 132 240 142 190 Q 162 180 192 220" fill="none" stroke="url(#crabGrad)" stroke-width="14" stroke-linecap="round" />
+    <path d="M 222 275 Q 122 280 147 330 Q 182 330 202 285" fill="none" stroke="url(#crabGrad)" stroke-width="14" stroke-linecap="round" />
+    <path d="M 227 295 Q 147 340 182 390 Q 212 380 222 320" fill="none" stroke="url(#crabGrad)" stroke-width="14" stroke-linecap="round" />
+
+    <!-- Right Large Claw -->
+    <path d="M 295 240 C 370 210, 420 180, 400 110 C 340 90, 310 150, 315 195" fill="url(#crabGrad)" />
+    <!-- Claw Movable Finger -->
+    <path d="M 400 110 C 420 150, 370 170, 360 150" fill="#f59e0b" />
+
+    <!-- Left Large Claw -->
+    <path d="M 217 240 C 142 210, 92 180, 112 110 C 172 90, 202 150, 197 195" fill="url(#crabGrad)" />
+    <!-- Left Claw Movable Finger -->
+    <path d="M 112 110 C 92 150, 142 170, 152 150" fill="#f59e0b" />
+
+    <!-- Crab Main Carapace -->
+    <path d="M 160 270 C 140 220, 372 220, 352 270 C 352 320, 160 320, 160 270 Z" fill="url(#crabGrad)" />
+
+    <!-- Eyes Stalks & Bulbs -->
+    <!-- Left Eye -->
+    <line x1="216" y1="228" x2="206" y2="190" stroke="url(#crabGrad)" stroke-width="8" stroke-linecap="round" />
+    <circle cx="206" cy="190" r="12" fill="#ffffff" />
+    <circle cx="204" cy="190" r="6" fill="#0f172a" />
+    <!-- Right Eye -->
+    <line x1="296" y1="228" x2="306" y2="190" stroke="url(#crabGrad)" stroke-width="8" stroke-linecap="round" />
+    <circle cx="306" cy="190" r="12" fill="#ffffff" />
+    <circle cx="308" cy="190" r="6" fill="#0f172a" />
+  </g>
+
+  <!-- Highlighting core focus with white/orange marker overlay -->
+  <circle cx="256" cy="255" r="15" fill="#ffffff" fill-opacity="0.15" />
+</svg>

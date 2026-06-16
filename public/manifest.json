@@ -1,0 +1,25 @@
+{
+  "name": "Monitoramento do Caranguejo-Amarelo",
+  "short_name": "Caranguejo",
+  "description": "Ciência Cidadã para preservação do Caranguejo Amarelo em Fernando de Noronha.",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "any"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "background_color": "#f8fafc",
+  "theme_color": "#ea580c",
+  "display": "standalone",
+  "orientation": "portrait"
+}

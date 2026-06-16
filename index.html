@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+    <title>Monitoramento Caranguejo Noronha</title>
+    <meta name="description" content="Monitoramento do Caranguejo Amarelo em Fernando de Noronha" />
+    <meta name="theme-color" content="#0f172a" />
+    
+    <!-- PWA Manifest & App Icons -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="CrabNoronha" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              sand: {
+                50: '#fdfbf7',
+                100: '#f7f3e6',
+                200: '#ece4c4',
+                300: '#decf9b',
+                400: '#d0b670',
+                500: '#c59d4e',
+              },
+              ocean: {
+                800: '#1e3a8a',
+                900: '#0f172a',
+              },
+              crab: {
+                500: '#f97316',
+                600: '#ea580c',
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      /* Custom scrollbar for webkit */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f7f3e6;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #d0b670;
+        border-radius: 3px;
+      }
+      body {
+        -webkit-tap-highlight-color: transparent;
+        background-color: #f7f3e6;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

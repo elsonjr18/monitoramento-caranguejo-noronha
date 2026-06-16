@@ -1,0 +1,11 @@
+{
+  "name": "Monitoramento Caranguejo Noronha",
+  "description": "Aplicativo de ciência cidadã para monitoramento do Caranguejo Amarelo (Gecarcinus lagostoma) em Fernando de Noronha.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
