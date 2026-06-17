@@ -17,7 +17,7 @@ import {
 } from './types';
 import { 
   Calendar, Clock, FileText, CheckCircle, AlertTriangle, AlertCircle, Sparkles, Heart, ShieldAlert, ArrowRight, X, Loader2, Wifi, WifiOff, Database, RefreshCw, ChevronDown, ChevronUp, Info, Activity,
-  Camera, MapPin, Search
+  Camera, MapPin, Search, Compass
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { savePendingRecord, getPendingRecords, OfflineRecord } from './utils/offlineQueue';
@@ -206,6 +206,13 @@ const App: React.FC = () => {
         setFormData(prev => ({ ...prev, movementPattern: '', activity: '' }));
       }
     }
+    
+    // Regra de Consistência: Risco de atropelamento automático
+    if (formData.status === CrabStatus.ATROPELADO_VIVO || formData.status === CrabStatus.ATROPELADO_MORTO) {
+      if (formData.collisionRisk !== 'Sim') {
+        setFormData(prev => ({ ...prev, collisionRisk: 'Sim' }));
+      }
+    }
   }, [formData.status]);
 
   // Regras Biológicas: Ovos visíveis -> Fêmea obrigatória
@@ -232,41 +239,78 @@ const App: React.FC = () => {
     
     if (!formData.photoUrl) {
       setValidationError("A fotografia é obrigatória no registro básico.");
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const el = document.getElementById('photo-section');
+      if (el) {
+        const y = el.getBoundingClientRect().top + window.scrollY - 100;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
       return;
     }
     if (!formData.location) {
       setValidationError("A localização (GPS) é obrigatória.");
       const el = document.getElementById('location-section');
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (el) {
+        const y = el.getBoundingClientRect().top + window.scrollY - 100;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
       return;
     }
     if (!formData.habitat) {
       setValidationError("Por favor, informe onde você encontrou o caranguejo.");
       const el = document.getElementById('habitat-section');
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (el) {
+        const y = el.getBoundingClientRect().top + window.scrollY - 100;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
       return;
     }
     if (!formData.status) {
       setValidationError("Por favor, informe como você encontrou o caranguejo.");
+      const el = document.getElementById('status-section');
+      if (el) {
+        const y = el.getBoundingClientRect().top + window.scrollY - 100;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
       return;
     }
     if (!formData.color) {
       setValidationError("Por favor, selecione a cor predominante no registro básico.");
+      const el = document.getElementById('color-section');
+      if (el) {
+        const y = el.getBoundingClientRect().top + window.scrollY - 100;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
       return;
     }
     if (!formData.eggVisibility) {
       setValidationError("Saber se havia ovos visíveis é obrigatório.");
+      const el = document.getElementById('eggVisibility-section');
+      if (el) {
+        const y = el.getBoundingClientRect().top + window.scrollY - 100;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
       return;
     }
 
     if (!formData.photoUrl.startsWith('data:image/')) {
       setValidationError("Erro ao processar a foto. Remova e tire novamente.");
+      const el = document.getElementById('photo-section');
+      if (el) {
+        const y = el.getBoundingClientRect().top + window.scrollY - 100;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
       return;
     }
 
     if (formData.sex === CrabSex.MALE && formData.eggVisibility === EggVisibility.VISIBLE) {
       setValidationError("Atenção: Ovos visíveis indicam uma fêmea. Revise o campo de Sexo sugerido como 'Macho'.");
+      const el = document.getElementById('sex-section');
+      if (el) {
+        const y = el.getBoundingClientRect().top + window.scrollY - 100;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
       return;
     }
 
@@ -381,7 +425,14 @@ const App: React.FC = () => {
   };
 
   const resetForm = () => {
-    const formatted = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date());
+    let formatted = '';
+    try {
+      formatted = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date());
+    } catch (e) {
+      const now = new Date();
+      formatted = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR');
+    }
+
     setFormData({
       timestamp: formatted,
       location: null,
@@ -406,7 +457,11 @@ const App: React.FC = () => {
     setShowSuccessModal(false);
     setSubmittedPayload(null);
     setShowTechnicalData(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e) {
+      console.warn('Scroll to top failed gracefully:', e);
+    }
   };
 
   const technicalFieldsCount = [
@@ -420,6 +475,7 @@ const App: React.FC = () => {
 
   const isOvigerous = formData.eggVisibility === EggVisibility.VISIBLE;
   const isFullyStopped = formData.movementPattern === CrabMovementPattern.TOTALMENTE_PARADO;
+  const isCrabRunOver = formData.status === CrabStatus.ATROPELADO_VIVO || formData.status === CrabStatus.ATROPELADO_MORTO;
 
   // Barra de progresso inteligente
   const requiredFields = [
@@ -433,16 +489,16 @@ const App: React.FC = () => {
   const completedCount = requiredFields.filter(val => !!val).length;
   const progressPercent = Math.round((completedCount / requiredFields.length) * 100);
 
-  const renderRadioOption = (name: string, value: string, currentValue: string, label: string, desc?: string, disabled?: boolean) => {
+  const renderRadioOption = (name: string, value: string, currentValue: string, label: string | React.ReactNode, desc?: string | React.ReactNode, disabled?: boolean) => {
     const isSelected = currentValue === value;
     
     let btnStyle = '';
     if (isSelected) {
       btnStyle = isLight 
-        ? 'border-orange-500 bg-orange-50/80 shadow-sm text-orange-950' 
+        ? 'border-orange-500 bg-orange-50/80 shadow-md text-orange-950 scale-[1.01]' 
         : isDark 
-          ? 'border-orange-500 bg-orange-950/30 shadow-sm text-orange-100' 
-          : 'border-red-650 bg-red-950/45 text-red-400 font-bold';
+          ? 'border-orange-500 bg-orange-950/30 shadow-md text-orange-100 scale-[1.01]' 
+          : 'border-red-650 bg-red-950/45 text-red-400 font-bold scale-[1.01]';
     } else {
       btnStyle = isLight 
         ? 'border-sand-200 bg-white hover:border-sand-300 hover:bg-sand-50/50 text-slate-705' 
@@ -455,41 +511,46 @@ const App: React.FC = () => {
       <button
         key={value}
         type="button"
-        onClick={() => { if (!disabled) setFormData(p => ({ ...p, [name]: value })) }}
+        onClick={() => { 
+          if (!disabled) {
+            setFormData(p => ({ ...p, [name]: value }));
+            if (navigator.vibrate) navigator.vibrate(50);
+          }
+        }}
         disabled={disabled}
         className={`
-          w-full p-4 rounded-2xl border-2 text-left flex items-start gap-3.5 transition-all outline-none
+          w-full p-4 sm:p-5 rounded-2xl border-2 text-left flex items-start gap-4 transition-all focus:outline-none focus:ring-4 focus:ring-orange-500/30
           ${btnStyle}
           ${disabled ? 'opacity-40 cursor-not-allowed grayscale' : ''}
         `}
         aria-pressed={isSelected}
       >
         <div className={`mt-0.5 flex-shrink-0 transition-colors ${isSelected ? (isRed ? 'text-red-500' : 'text-orange-500') : (isRed ? 'text-red-950' : 'text-slate-300')}`}>
-          {isSelected ? <CheckCircle className="w-5 h-5" /> : <div className={`w-5 h-5 rounded-full border-2 ${isRed ? 'border-red-950' : 'border-slate-300'}`} />}
+          {isSelected ? <CheckCircle className="w-6 h-6 sm:w-7 sm:h-7" /> : <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 ${isRed ? 'border-red-950' : 'border-slate-300'}`} />}
         </div>
         <div>
-          <span className={`text-[15px] font-bold tracking-tight ${isSelected ? (isLight ? 'text-orange-955' : isDark ? 'text-orange-100' : 'text-red-400') : (isLight ? 'text-slate-700' : isDark ? 'text-slate-300' : 'text-red-500')}`}>{label}</span>
-          {desc && <p className={`text-[13px] leading-relaxed mt-1 ${isSelected ? (isLight ? 'text-orange-850/80' : isDark ? 'text-orange-200/80' : 'text-red-500/80') : (isLight ? 'text-slate-505' : isDark ? 'text-slate-400' : 'text-red-600')}`}>{desc}</p>}
+          <span className={`text-base sm:text-lg font-bold tracking-tight ${isSelected ? (isLight ? 'text-orange-955' : isDark ? 'text-orange-100' : 'text-red-400') : (isLight ? 'text-slate-700' : isDark ? 'text-slate-300' : 'text-red-500')}`}>{label}</span>
+          {desc && <p className={`text-sm sm:text-[15px] leading-relaxed mt-1 ${isSelected ? (isLight ? 'text-orange-850/80' : isDark ? 'text-orange-200/80' : 'text-red-500/80') : (isLight ? 'text-slate-505' : isDark ? 'text-slate-400' : 'text-red-600')}`}>{desc}</p>}
         </div>
       </button>
     );
   };
 
   const StepDivider = ({ step, title, desc }: { step: string, title: string, desc?: string }) => (
-    <div className="pt-6 pb-2">
-      <div className="flex items-center gap-3">
-        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-extrabold border shrink-0 ${
+    <div className="pt-8 pb-3">
+      <div className="flex items-center gap-4">
+        <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg font-black border-2 shrink-0 ${
           isLight 
-            ? 'bg-orange-100 text-orange-600 border-orange-200' 
+            ? 'bg-orange-100 text-orange-700 border-orange-200 shadow-sm' 
             : isDark 
-              ? 'bg-orange-950/30 text-orange-500 border-orange-955/40' 
-              : 'bg-black text-red-500 border-red-950'
+              ? 'bg-orange-950/40 text-orange-400 border-orange-900/50 shadow-sm' 
+              : 'bg-black text-red-500 border-red-950 shadow-sm'
         }`}>
           {step}
         </div>
         <div>
-          <h2 className={`text-lg font-extrabold tracking-tight leading-none ${s.title}`}>{title}</h2>
-          {desc && <p className={`text-[13px] font-medium mt-1 ${s.textMuted}`}>{desc}</p>}
+          <h2 className={`text-xl sm:text-2xl font-black tracking-tight leading-none ${s.title}`}>{title}</h2>
+          {desc && <p className={`text-sm sm:text-[15px] font-medium mt-1.5 ${s.textMuted}`}>{desc}</p>}
         </div>
       </div>
     </div>
@@ -498,6 +559,28 @@ const App: React.FC = () => {
   return (
     <div className={`min-h-screen pb-28 font-sans transition-all duration-300 ${s.bodyBg} ${isLight ? 'text-slate-800' : isDark ? 'text-slate-200' : 'text-red-500'}`}>
       <Header theme={theme} onThemeChange={handleThemeChange} />
+
+      {/* Cabeçalho Inteligente de GPS */}
+      <div className={`px-4 py-2.5 border-b text-xs flex justify-between items-center shadow-sm transition-colors ${
+        formData.location
+          ? (isLight ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : isDark ? 'bg-emerald-950/30 border-emerald-900/40 text-emerald-400' : 'bg-[#020000] border-red-950 text-red-500')
+          : (isLight ? 'bg-sky-50 border-sky-100 text-sky-800' : isDark ? 'bg-sky-950/30 border-sky-900/40 text-sky-400' : 'bg-black border-red-950 text-red-400')
+      }`}>
+        <div className="flex items-center justify-between font-bold max-w-md md:max-w-lg mx-auto w-full">
+          {formData.location ? (
+            <>
+              <div className="flex items-center gap-1.5"><MapPin className="h-4 w-4 shrink-0" /> <span>Localização obtida</span></div>
+              <span className={`font-medium ${isLight ? 'text-emerald-600' : isDark ? 'text-emerald-500/80' : 'text-red-700'}`}>
+                Precisão: {Math.round(formData.location.accuracy || 0)}m
+              </span>
+            </>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <Compass className="h-4 w-4 shrink-0 animate-pulse" /> <span>Procurando localização (GPS em 2º plano)...</span>
+            </div>
+          )}
+        </div>
+      </div>
 
       <main className="max-w-md md:max-w-lg mx-auto px-4 py-5 space-y-5">
         
@@ -708,90 +791,128 @@ const App: React.FC = () => {
 
             <StepDivider step="3" title="Dados do Caranguejo" desc="Principais informações do indivíduo." />
 
-            <div className={`p-5 rounded-2xl border space-y-3.5 transition-all duration-300 ${s.cardBg}`}>
-              <div className={`flex items-center gap-2.5 pb-3 border-b ${s.innerBorder}`}>
-                <div className={`p-1.5 rounded-lg shrink-0 ${isLight ? 'bg-orange-100 text-orange-600' : isDark ? 'bg-orange-950 text-orange-400' : 'bg-red-950/30 text-red-500'}`}>
-                  <Activity className="h-5 w-5" />
+            <div id="status-section" className={`p-5 sm:p-6 rounded-2xl border space-y-4 transition-all duration-300 ${s.cardBg}`}>
+              <div className={`flex items-center gap-3 pb-3 border-b ${s.innerBorder}`}>
+                <div className={`p-2 rounded-xl shrink-0 ${isLight ? 'bg-orange-100 text-orange-600' : isDark ? 'bg-orange-950 text-orange-400' : 'bg-red-950/30 text-red-500'}`}>
+                  <Activity className="h-6 w-6" />
                 </div>
-                <h3 className={`font-extrabold tracking-tight text-base ${s.titleAlt}`}>Como você encontrou o caranguejo?</h3>
+                <h3 className={`font-extrabold tracking-tight text-lg ${s.titleAlt}`}>Como você encontrou o caranguejo?</h3>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {Object.values(CrabStatus).map(status => renderRadioOption('status', status, formData.status, status))}
               </div>
             </div>
 
-            <div className={`p-5 rounded-2xl border space-y-3.5 transition-all duration-300 ${s.cardBg}`}>
-              <div className={`flex items-center gap-2.5 pb-3 border-b ${s.innerBorder}`}>
-                <div className={`p-1.5 rounded-lg shrink-0 ${isLight ? 'bg-amber-100 text-amber-750' : isDark ? 'bg-amber-950 text-amber-400' : 'bg-red-950/30 text-red-500'}`}>
-                  <Sparkles className="h-5 w-5" />
+            <div id="color-section" className={`p-5 sm:p-6 rounded-2xl border space-y-4 transition-all duration-300 ${s.cardBg}`}>
+              <div className={`flex items-center gap-3 pb-3 border-b ${s.innerBorder}`}>
+                <div className={`p-2 rounded-xl shrink-0 ${isLight ? 'bg-amber-100 text-amber-750' : isDark ? 'bg-amber-950 text-amber-400' : 'bg-red-950/30 text-red-500'}`}>
+                  <Sparkles className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className={`font-extrabold tracking-tight text-base ${s.titleAlt}`}>Cor predominante</h3>
+                  <h3 className={`font-extrabold tracking-tight text-lg ${s.titleAlt}`}>Cor predominante</h3>
                 </div>
               </div>
-              <p className={`text-[13px] leading-normal ${s.textMuted}`}>Escolha a cor que mais se aproximava da aparência do animal.</p>
-              <div className="space-y-2">
+              <p className={`text-sm sm:text-[15px] leading-relaxed ${s.textMuted}`}>Escolha a cor que mais se aproximava da aparência do animal.</p>
+              <div className="space-y-2.5">
                 {Object.values(CrabColor).map(color => renderRadioOption('color', color, formData.color, color))}
               </div>
             </div>
 
-            <div className={`p-5 rounded-2xl border space-y-3.5 transition-all duration-300 ${s.cardBg}`}>
-              <div className={`flex items-center gap-2.5 pb-3 border-b ${s.innerBorder}`}>
-                <div className={`p-1.5 rounded-lg shrink-0 ${isLight ? 'bg-sky-100 text-sky-700' : isDark ? 'bg-sky-950 text-sky-450' : 'bg-red-950/30 text-red-500'}`}>
-                  <Search className="h-5 w-5" />
+            <div id="eggVisibility-section" className={`p-5 sm:p-6 rounded-2xl border space-y-4 transition-all duration-300 ${s.cardBg}`}>
+              <div className={`flex items-center gap-3 pb-3 border-b ${s.innerBorder}`}>
+                <div className={`p-2 rounded-xl shrink-0 ${isLight ? 'bg-sky-100 text-sky-700' : isDark ? 'bg-sky-950 text-sky-450' : 'bg-red-950/30 text-red-500'}`}>
+                  <Search className="h-6 w-6" />
                 </div>
-                <h3 className={`font-extrabold tracking-tight text-base ${s.titleAlt}`}>Havia ovos visíveis sob o abdômen?</h3>
+                <h3 className={`font-extrabold tracking-tight text-lg ${s.titleAlt}`}>Havia ovos visíveis sob o abdômen?</h3>
               </div>
-              <p className={`text-[13px] leading-normal ${s.textMuted}`}>Os ovos ficam presos na parte inferior do corpo da fêmea. Responda somente se foi possível observar, sem tocar ou perturbar o animal.</p>
-              
-              {/* Alerta de Quantidade > 1 */}
-              {(formData.amount as number) > 1 && (
-                <p className={`text-xs font-semibold p-3.5 rounded-xl border leading-relaxed ${s.warnBox}`}>
-                  Essas características podem variar entre os indivíduos observados. Preencha apenas se tiver segurança na informação.
-                </p>
-              )}
+              <p className={`text-sm sm:text-[15px] leading-relaxed ${s.textMuted}`}>Os ovos ficam presos na parte inferior do corpo da fêmea. Responda somente se foi possível observar, sem tocar ou perturbar o animal.</p>
 
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {Object.values(EggVisibility).map(egg => renderRadioOption('eggVisibility', egg, formData.eggVisibility, egg))}
               </div>
             </div>
 
-            <div className={`p-5 rounded-2xl border space-y-5 transition-all duration-300 ${s.cardBg}`}>
-              <div className="space-y-3.5">
-                <div className={`flex items-center gap-2.5 pb-3 border-b ${s.innerBorder}`}>
-                  <div className={`p-1.5 rounded-lg shrink-0 ${isLight ? 'bg-indigo-100 text-indigo-700' : isDark ? 'bg-indigo-950 text-indigo-400' : 'bg-red-950/30 text-red-500'}`}>
-                    <FileText className="h-5 w-5" />
+            <div className={`p-5 sm:p-6 rounded-2xl border space-y-5 transition-all duration-300 ${s.cardBg}`}>
+              <div className="space-y-4">
+                <div className={`flex items-center gap-3 pb-3 border-b ${s.innerBorder}`}>
+                  <div className={`p-2 rounded-xl shrink-0 ${isLight ? 'bg-indigo-100 text-indigo-700' : isDark ? 'bg-indigo-950 text-indigo-400' : 'bg-red-950/30 text-red-500'}`}>
+                    <FileText className="h-6 w-6" />
                   </div>
-                  <h3 className={`font-extrabold tracking-tight text-base ${s.titleAlt}`}>Quantos caranguejos você viu?</h3>
+                  <h3 className={`font-extrabold tracking-tight text-lg ${s.titleAlt}`}>Este registro representa:</h3>
                 </div>
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-3">
-                    <button type="button" onClick={() => setFormData(p => ({ ...p, amount: Math.max(1, (p.amount as number || 1) - 1) }))} className={`p-3 rounded-xl font-bold w-12 text-center text-lg transition-colors ${isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-800' : isDark ? 'bg-slate-950 hover:bg-slate-900 text-slate-200' : 'bg-red-950/30 hover:bg-red-950/50 text-red-500'}`}>-</button>
-                    <input 
-                      type="number" 
-                      min="1" 
-                      value={formData.amount} 
-                      onChange={e => {
-                        const val = parseInt(e.target.value, 10);
-                        setFormData(p => ({ ...p, amount: isNaN(val) ? '' : Math.max(1, val) }))
-                      }}
-                      className={`border-2 p-3 focus:ring outline-none w-24 text-center font-bold text-lg rounded-xl transition-all ${s.bgInput} ${isLight ? 'focus:ring-orange-200 border-slate-200' : isDark ? 'focus:ring-orange-900 border-slate-750' : 'focus:ring-red-950 border-red-950'}`} 
-                    />
-                    <button type="button" onClick={() => setFormData(p => ({ ...p, amount: (p.amount as number || 0) + 1 }))} className={`p-3 rounded-xl font-bold w-12 text-center text-lg transition-colors ${isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-800' : isDark ? 'bg-slate-950 hover:bg-slate-900 text-slate-200' : 'bg-red-950/30 hover:bg-red-950/50 text-red-500'}`}>+</button>
-                  </div>
-                  <select 
-                    value={formData.countType} 
-                    onChange={e => setFormData(p => ({ ...p, countType: e.target.value as CountType }))}
-                    className={`w-full text-sm font-semibold p-4 border-2 focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 rounded-xl transition-all ${s.bgInput}`}
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(p => ({ ...p, amount: 1, countType: '' as CountType }));
+                      if (navigator.vibrate) navigator.vibrate(50);
+                    }}
+                    className={`p-4 sm:p-5 rounded-2xl border-2 text-center flex flex-col items-center justify-center gap-2 transition-all ${
+                      formData.amount === 1 
+                        ? (isLight ? 'border-orange-500 bg-orange-50 text-orange-800' : isDark ? 'border-orange-500 bg-orange-950/40 text-orange-300' : 'border-red-500 bg-red-950/40 text-red-500') 
+                        : (isLight ? 'border-slate-200 bg-white text-slate-600 hover:border-slate-300' : isDark ? 'border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700' : 'border-red-950 bg-black text-red-900 focus:outline-none')
+                    }`}
                   >
-                    <option value="">Forma de contagem (Opcional)</option>
-                    {Object.values(CountType).map(v => <option key={v} value={v}>{v}</option>)}
-                  </select>
+                    <span className="text-3xl sm:text-4xl">🦀</span>
+                    <span className="font-bold text-sm sm:text-base leading-tight">Um único<br/>caranguejo</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(p => ({ ...p, amount: p.amount === 1 ? 2 : p.amount }));
+                      if (navigator.vibrate) navigator.vibrate(50);
+                    }}
+                    className={`p-4 sm:p-5 rounded-2xl border-2 text-center flex flex-col items-center justify-center gap-2 transition-all ${
+                      formData.amount !== 1 
+                        ? (isLight ? 'border-indigo-500 bg-indigo-50 text-indigo-800' : isDark ? 'border-indigo-500 bg-indigo-950/40 text-indigo-300' : 'border-red-500 bg-red-950/40 text-red-500') 
+                        : (isLight ? 'border-slate-200 bg-white text-slate-600 hover:border-slate-300' : isDark ? 'border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700' : 'border-red-950 bg-black text-red-900 focus:outline-none')
+                    }`}
+                  >
+                    <span className="text-3xl sm:text-4xl">🦀🦀</span>
+                    <span className="font-bold text-sm sm:text-base leading-tight">Vários<br/>caranguejos</span>
+                  </button>
                 </div>
-                {(formData.amount > 1 || formData.countType === CountType.MANY) && (
-                  <p className={`text-xs font-semibold p-3 rounded-xl border leading-relaxed ${s.infoBox}`}>
-                    Para cor, ovos, sexo e tamanho, responda sobre o caranguejo que aparece em destaque na fotografia.
-                  </p>
+
+                {formData.amount !== 1 && (
+                  <div className="flex flex-col gap-4 mt-2">
+                    <div className="space-y-1">
+                      <h4 className={`font-bold ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>Quantos caranguejos você observou aproximadamente?</h4>
+                      <p className={`text-xs font-medium ${s.textLight}`}>Use esta opção quando observar vários indivíduos ao mesmo tempo, como em agrupamentos ou andadas.</p>
+                    </div>
+                    <div className="flex items-center gap-3 h-14">
+                      <button type="button" onClick={() => {
+                        setFormData(p => ({ ...p, amount: Math.max(2, (p.amount as number || 2) - 1) }));
+                        if (navigator.vibrate) navigator.vibrate(30);
+                      }} className={`p-3 h-full rounded-xl font-bold w-14 text-center text-xl transition-colors ${isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-800' : isDark ? 'bg-slate-950 hover:bg-slate-900 text-slate-200' : 'bg-red-950/30 hover:bg-red-950/50 text-red-500'}`}>-</button>
+                      <input 
+                        type="number" 
+                        min="2" 
+                        value={formData.amount} 
+                        onChange={e => {
+                          const val = parseInt(e.target.value, 10);
+                          setFormData(p => ({ ...p, amount: isNaN(val) ? '' : Math.max(1, val) }))
+                        }}
+                        className={`border-2 p-3 h-full focus:ring outline-none w-28 text-center font-black text-xl rounded-xl transition-all ${s.bgInput} ${isLight ? 'focus:ring-orange-200 border-slate-200' : isDark ? 'focus:ring-orange-900 border-slate-750' : 'focus:ring-red-950 border-red-950'}`} 
+                      />
+                      <button type="button" onClick={() => {
+                        setFormData(p => ({ ...p, amount: (p.amount as number || 0) + 1 }));
+                        if (navigator.vibrate) navigator.vibrate(30);
+                      }} className={`p-3 h-full rounded-xl font-bold w-14 text-center text-xl transition-colors ${isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-800' : isDark ? 'bg-slate-950 hover:bg-slate-900 text-slate-200' : 'bg-red-950/30 hover:bg-red-950/50 text-red-500'}`}>+</button>
+                    </div>
+                    <select 
+                      value={formData.countType} 
+                      onChange={e => setFormData(p => ({ ...p, countType: e.target.value as CountType }))}
+                      className={`w-full text-base font-semibold p-4 border-2 focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 rounded-xl transition-all h-14 ${s.bgInput}`}
+                    >
+                      <option value="">Forma de contagem (Opcional)</option>
+                      {Object.values(CountType).map(v => <option key={v} value={v}>{v}</option>)}
+                    </select>
+
+                    <p className={`text-sm sm:text-[15px] p-4 rounded-xl border leading-relaxed ${s.infoBox}`}>
+                      Você observou mais de um indivíduo. Caso informe sexo, tamanho ou ovos visíveis, considere que essas características podem não representar todos os indivíduos observados.
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
@@ -867,7 +988,7 @@ const App: React.FC = () => {
                       </p>
                     )}
 
-                    <div className="space-y-2.5">
+                    <div id="sex-section" className="space-y-2.5">
                       <div className="flex flex-col gap-0.5">
                         <h4 className={`font-bold text-sm ${isLight ? 'text-slate-850' : 'text-slate-200'}`}>Você conseguiu identificar o sexo?</h4>
                         <span className={`text-[11px] font-semibold ${s.textLight}`}>Opcional</span>
@@ -885,8 +1006,24 @@ const App: React.FC = () => {
 
                     <div className="space-y-2.5">
                       <h4 className={`font-bold text-sm ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>Tamanho estimado</h4>
+                      <p className={`text-xs font-medium ${s.textLight}`}>Referência visual baseada na largura da carapaça.</p>
                       <div className="space-y-2">
-                        {Object.values(CrabSizeClass).map(size => renderRadioOption('sizeClass', size, formData.sizeClass, size))}
+                        {renderRadioOption('sizeClass', CrabSizeClass.SMALL, formData.sizeClass, 
+                          <span className="flex items-center gap-2">Pequeno <div className="w-5 h-3 bg-current rounded-full opacity-60"></div></span>, 
+                          'Até cerca de 5 cm de largura da carapaça.'
+                        )}
+                        {renderRadioOption('sizeClass', CrabSizeClass.MEDIUM, formData.sizeClass, 
+                          <span className="flex items-center gap-2">Médio <div className="w-8 h-4.5 bg-current rounded-full opacity-70"></div></span>, 
+                          'Entre 5 cm e 10 cm de largura da carapaça.'
+                        )}
+                        {renderRadioOption('sizeClass', CrabSizeClass.LARGE, formData.sizeClass, 
+                          <span className="flex items-center gap-2">Grande <div className="w-12 h-6 bg-current rounded-full opacity-80"></div></span>, 
+                          'Acima de 10 cm, como o tamanho de um punho fechado ou maior.'
+                        )}
+                        {renderRadioOption('sizeClass', CrabSizeClass.NOT_ESTIMATED, formData.sizeClass, 
+                          'Não foi possível estimar',
+                          'Desconhecido'
+                        )}
                       </div>
                     </div>
 
@@ -931,21 +1068,34 @@ const App: React.FC = () => {
                     <div className="space-y-2.5">
                       <h4 className={`font-bold text-sm ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>Havia risco de atropelamento no local?</h4>
                       <div className="grid grid-cols-3 gap-2">
-                        {['Sim', 'Não', 'Não foi possível avaliar'].map(risk => (
-                          <button 
-                            key={risk} 
-                            type="button" 
-                            onClick={() => setFormData(p => ({ ...p, collisionRisk: risk }))} 
-                            className={`py-3 px-2 rounded-xl border-2 text-xs font-bold text-center transition-colors ${
-                              formData.collisionRisk === risk 
-                                ? isRed ? 'bg-red-950/50 border-red-500 text-red-400' : 'bg-orange-500 border-orange-500 text-white' 
-                                : isLight ? 'bg-white border-slate-200 text-slate-600 hover:border-slate-350' : isDark ? 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-755' : 'bg-black border-red-950 text-red-600 hover:border-red-900'
-                            }`}
-                          >
-                            {risk}
-                          </button>
-                        ))}
+                        {['Sim', 'Não', 'Não foi possível avaliar'].map(risk => {
+                          const isDisabled = isCrabRunOver && risk !== 'Sim';
+                          return (
+                            <button 
+                              key={risk} 
+                              type="button" 
+                              disabled={isDisabled}
+                              onClick={() => setFormData(p => ({ ...p, collisionRisk: risk }))} 
+                              className={`py-3 px-2 rounded-xl border-2 text-xs font-bold text-center transition-colors ${
+                                formData.collisionRisk === risk 
+                                  ? isRed ? 'bg-red-950/50 border-red-500 text-red-400' : 'bg-orange-500 border-orange-500 text-white' 
+                                  : isDisabled
+                                    ? isLight ? 'bg-slate-50 border-slate-100 text-slate-400 opacity-60 cursor-not-allowed' : isDark ? 'bg-slate-900 border-slate-800 text-slate-600 opacity-60 cursor-not-allowed' : 'bg-black border-red-950/50 text-red-900 opacity-60 cursor-not-allowed'
+                                    : isLight ? 'bg-white border-slate-200 text-slate-600 hover:border-slate-350' : isDark ? 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-755' : 'bg-black border-red-950 text-red-600 hover:border-red-900'
+                              }`}
+                            >
+                              {risk}
+                            </button>
+                          );
+                        })}
                       </div>
+                      
+                      {isCrabRunOver && (
+                        <p className={`text-[12px] font-semibold mt-2 flex items-start gap-1.5 p-3 rounded-xl shadow-sm ${s.warnBox}`}>
+                          <Info className="h-4 w-4 shrink-0 mt-0.5 text-amber-600" />
+                          <span>Como o animal foi registrado atropelado, o risco de atropelamento neste local foi marcado automaticamente como Sim.</span>
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2.5">
@@ -961,20 +1111,59 @@ const App: React.FC = () => {
             </AnimatePresence>
           </div>
 
-          <div className="pt-4 pb-2">
+          <div className="pt-2">
+            <div className={`p-4 rounded-xl border space-y-3 ${isLight ? 'bg-slate-50 border-slate-200' : isDark ? 'bg-slate-900 border-slate-800' : 'bg-black border-red-950'}`}>
+              <h4 className={`text-xs font-bold uppercase tracking-wide flex items-center justify-between ${s.title}`}>
+                Resumo do Registro 
+                <span className={`px-2 py-0.5 rounded text-[10px] ${progressPercent === 100 ? (isLight ? 'bg-emerald-100 text-emerald-800' : isDark ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-900/30' : 'bg-black text-red-500 border border-red-950') : 'bg-slate-200 text-slate-600'}`}>{progressPercent}% Concluído</span>
+              </h4>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="flex flex-col">
+                  <span className={`text-[10px] uppercase font-bold ${s.textMuted}`}>Foto</span>
+                  <span className={`font-semibold ${formData.photoUrl ? 'text-emerald-500' : s.textLight}`}>{formData.photoUrl ? '✓ Anexada' : 'Faltando'}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className={`text-[10px] uppercase font-bold ${s.textMuted}`}>GPS</span>
+                  <span className={`font-semibold ${formData.location ? 'text-emerald-500' : s.textLight}`}>{formData.location ? '✓ Capturado' : 'Faltando'}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className={`text-[10px] uppercase font-bold ${s.textMuted}`}>Ambiente</span>
+                  <span className={`font-semibold truncate ${formData.habitat ? s.titleAlt : s.textLight}`}>{formData.habitat || 'Faltando'}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className={`text-[10px] uppercase font-bold ${s.textMuted}`}>Condição</span>
+                  <span className={`font-semibold truncate ${formData.status ? s.titleAlt : s.textLight}`}>{formData.status || 'Faltando'}</span>
+                </div>
+                {formData.amount && (
+                  <div className="flex flex-col">
+                    <span className={`text-[10px] uppercase font-bold ${s.textMuted}`}>Qtd</span>
+                    <span className={`font-semibold truncate ${s.titleAlt}`}>{formData.amount}</span>
+                  </div>
+                )}
+                {formData.color && (
+                  <div className="flex flex-col">
+                    <span className={`text-[10px] uppercase font-bold ${s.textMuted}`}>Cor</span>
+                    <span className={`font-semibold truncate ${s.titleAlt}`}>{formData.color}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-6 pb-4">
             <button
               type="submit"
               disabled={isSending}
-              className={`w-full py-5 px-6 rounded-2xl shadow-sm transition-all hover:scale-[1.01] active:scale-95 flex items-center justify-center gap-3 text-lg font-extrabold ${isSending ? 'bg-slate-200 text-slate-400 cursor-not-allowed border-2 border-slate-200' : 'bg-orange-500 text-white hover:bg-orange-600 hover:shadow-md'}`}
+              className={`w-full py-6 px-6 rounded-2xl shadow-xl transition-all hover:scale-[1.02] active:scale-95 focus:ring-4 focus:ring-orange-500/50 outline-none flex items-center justify-center gap-3 text-xl font-black ${isSending ? 'bg-slate-200 text-slate-400 cursor-not-allowed border-2 border-slate-200' : 'bg-orange-600 text-white hover:bg-orange-700'}`}
             >
               {isSending ? (
-                <><Loader2 className="animate-spin h-6 w-6" /><span>Processando e Enviando...</span></>
+                <><Loader2 className="animate-spin h-7 w-7" /><span>Processando...</span></>
               ) : (
-                <><CheckCircle className="h-6 w-6" /><span>Enviar Registro</span></>
+                <><CheckCircle className="h-7 w-7" /><span>Enviar Registro</span></>
               )}
             </button>
-            <p className={`text-[11px] text-center font-medium mt-3 px-4 ${s.textLight}`}>
-              Revise as informações antes de enviar. O envio pode levar alguns segundos dependo da sua conexão.
+            <p className={`text-xs text-center font-medium mt-4 px-4 ${s.textLight}`}>
+              Revise as informações antes de enviar. O envio pode levar alguns segundos dependendo da sua conexão.
             </p>
           </div>
         </form>
@@ -1099,23 +1288,23 @@ const App: React.FC = () => {
                 isLight ? 'bg-white' : isDark ? 'bg-slate-900' : 'bg-black text-red-500 border border-red-955'
               }`}>
                 
-                <div className={`p-6 text-white text-center pb-8 relative overflow-hidden shrink-0 ${savedOffline ? 'bg-amber-500' : 'bg-emerald-500'}`}>
+                <div className={`p-5 text-white text-center pb-5 relative shrink-0 ${savedOffline ? 'bg-amber-500' : 'bg-emerald-500'}`}>
                   <div className="absolute inset-0 bg-white/10 mix-blend-overlay"></div>
-                  <div className="relative w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-md shadow-inner">
-                    {savedOffline ? <WifiOff className="h-8 w-8 text-white drop-shadow-md" /> : <CheckCircle className="h-8 w-8 text-white drop-shadow-md" />}
+                  <div className="relative w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-md shadow-inner">
+                    {savedOffline ? <WifiOff className="h-7 w-7 text-white drop-shadow-md" /> : <CheckCircle className="h-7 w-7 text-white drop-shadow-md" />}
                   </div>
-                  <h2 className="relative text-2xl font-black tracking-tight leading-tight">{savedOffline ? 'Salvo Offline!' : 'Muito Obrigado!'}</h2>
-                  <p className="relative text-white/95 text-[13px] mt-2 font-medium leading-relaxed max-w-[280px] mx-auto">
+                  <h2 className="relative text-xl sm:text-2xl font-black tracking-tight leading-tight">{savedOffline ? 'Salvo Offline!' : '🎉 Obrigado por contribuir!'}</h2>
+                  <p className="relative text-white/95 text-[12px] sm:text-[13px] mt-2 font-medium leading-normal max-w-[320px] mx-auto px-1">
                     {savedOffline 
-                      ? 'Registro guardado. Será enviado logo que tiver rede. Sua contribuição com o Caranguejo-Amarelo de Fernando de Noronha é fundamental.' 
-                      : 'Registro enviado com sucesso! Obrigado por contribuir com o monitoramento do Caranguejo-Amarelo de Fernando de Noronha.'}
+                      ? 'Registro guardado localmente. Será enviado logo que tiver rede. Sua contribuição é fundamental.' 
+                      : 'Seu registro foi enviado com sucesso para o projeto de monitoramento do Caranguejo-Amarelo. Cada observação ajuda pesquisadores e gestores ambientais a compreender melhor a espécie e apoiar ações de conservação em Fernando de Noronha.'}
                   </p>
                 </div>
 
                 <div className="flex-1 min-h-0 overflow-y-auto w-full relative">
                   <div className={`absolute top-0 inset-x-0 h-4 z-10 ${isLight ? 'bg-gradient-to-b from-white' : isDark ? 'bg-gradient-to-b from-slate-900' : 'bg-gradient-to-b from-black'}`}></div>
                   <div className="p-6 flex-1 space-y-4">
-                    <h4 className={`text-xs font-extrabold uppercase tracking-widest font-mono ${s.textMuted}`}>Dados da Observação:</h4>
+                    <h4 className={`text-xs font-extrabold uppercase tracking-widest font-mono ${s.textMuted}`}>O que você registrou:</h4>
                     
                     <div className="space-y-3.5 text-sm">
                       {(submittedPayload?.photoBase64 || submittedPayload?.photoUrl) && (
@@ -1174,11 +1363,16 @@ const App: React.FC = () => {
                   <div className={`absolute bottom-0 inset-x-0 h-4 ${isLight ? 'bg-gradient-to-t from-white' : isDark ? 'bg-gradient-to-t from-slate-900' : 'bg-gradient-to-t from-black'}`}></div>
                 </div>
 
-                <div className={`p-5 border-t shrink-0 ${
+                <div className={`p-5 flex flex-col sm:flex-row gap-3 border-t shrink-0 ${
                   isLight ? 'bg-slate-50 border-slate-100' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-[#020000] border-red-955'
                 }`}>
-                  <button type="button" onClick={resetForm} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition-transform hover:scale-[1.02] active:scale-95 text-center text-sm flex items-center justify-center gap-2">
-                    <span>Registrar Novo Caranguejo</span>
+                  <button type="button" onClick={resetForm} className={`w-full sm:w-1/3 text-sm font-bold py-3.5 px-4 rounded-xl border-2 transition-transform hover:scale-[1.02] active:scale-95 text-center flex items-center justify-center gap-2 ${
+                    isLight ? 'bg-white border-slate-200 text-slate-700' : isDark ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-black border-red-950 text-red-500'
+                  }`}>
+                    Fechar
+                  </button>
+                  <button type="button" onClick={resetForm} className="w-full sm:w-2/3 bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition-transform hover:scale-[1.02] active:scale-95 text-center text-sm flex items-center justify-center gap-2">
+                    <span>Novo Registro</span>
                     <ArrowRight className="h-4 w-4" />
                   </button>
                 </div>

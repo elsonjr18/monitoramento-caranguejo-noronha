@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GeoLocation } from '../types';
 import { MapPin, Compass, Loader2, Check, AlertCircle } from 'lucide-react';
 
@@ -68,6 +68,13 @@ const LocationInput: React.FC<LocationInputProps> = ({ location, onLocationCaptu
       ? 'bg-slate-900/80 border-slate-800' 
       : 'bg-black border-red-950';
 
+  useEffect(() => {
+    // Tenta pegar a localização inicial caso não tenha
+    if (!location && !loading && !error) {
+      captureLocation();
+    }
+  }, []);
+
   const captureLocation = () => {
     setLoading(true);
     setError(null);
@@ -77,6 +84,10 @@ const LocationInput: React.FC<LocationInputProps> = ({ location, onLocationCaptu
       setLoading(false);
       return;
     }
+
+    // Se suportado, pede a localização, pode vibrar tutilmente
+    if (navigator.vibrate) navigator.vibrate(50);
+
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
