@@ -7,15 +7,15 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ theme, onThemeChange }) => {
   return (
-    <header className="sticky top-0 z-50 bg-slate-900 border-b border-slate-800 shadow-md">
+    <header className="sticky top-0 z-50 bg-blue-900 border-b border-blue-800 shadow-md">
       {/* Top Banner with Partners Logos */}
-      <div className="bg-slate-950 border-b border-slate-800/60 px-4 py-2">
+      <div className="bg-blue-950 border-b border-blue-800/60 px-4 py-2">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
-            Ciência Cidadã • Fernando de Noronha
+          <span className="text-[10px] sm:text-xs font-bold text-blue-200 uppercase tracking-wider font-mono">
+            Monitoramento de FAUNA
           </span>
           <div className="flex items-center space-x-3 bg-white/5 px-2.5 py-1.5 rounded-full border border-white/10">
-            <span className="text-[9px] uppercase tracking-wider font-semibold text-slate-300 mr-0.5 font-sans">
+            <span className="text-[9px] uppercase tracking-wider font-semibold text-blue-100 mr-0.5 font-sans">
               Apoio:
             </span>
             <div className="flex items-center space-x-2">
@@ -57,42 +57,44 @@ const Header: React.FC<HeaderProps> = ({ theme, onThemeChange }) => {
       {/* Main Header Content */}
       <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-2.5">
         <div className="flex items-center space-x-2.5 min-w-0">
-          <div className="bg-gradient-to-tr from-amber-600 to-orange-500 p-2 rounded-xl shadow-lg ring-2 ring-orange-500/30 flex items-center justify-center shrink-0">
+          <div className="flex flex-shrink-0 items-center justify-center w-10 h-10">
             <svg 
               xmlns="http://www.w3.org/2000/svg" 
-              width="18" 
-              height="18" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="2.5" 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              className="text-white"
+              viewBox="0 0 36 36" 
+              className="w-full h-full drop-shadow transition-transform hover:scale-105"
             >
-              <path d="M12 12c-2 0-3.5-1.5-3.5-3.5 0-1.5 1-2.5 2-3 1-.5 3-.5 4 0 1 .5 2 1.5 2 3 0 2-1.5 3.5-3.5 3.5Z" />
-              <path d="M5 12c-2 0-3 1.5-3 3.5 0 2.5 2 4 4 4" />
-              <path d="M19 12c2 0 3 1.5 3 3.5 0 2.5-2 4-4 4" />
-              <path d="M12 12c0 3-1 4-2 6" />
-              <path d="M12 12c0 3 1 4 2 6" />
+              <defs>
+                <linearGradient id="crabAmberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#FBBF24" />
+                  <stop offset="100%" stopColor="#EA580C" />
+                </linearGradient>
+              </defs>
+              
+              {/* Single Crab Centered */}
+              <g transform="translate(18, 18) scale(2)">
+                <path fill="url(#crabAmberGrad)" d="M-3.5 -1.5 Q 0 -4 3.5 -1.5 Q 5 2 2.5 3 Q 0 4 -2.5 3 Q -5 2 -3.5 -1.5 Z" />
+                <path fill="url(#crabAmberGrad)" d="M-2.5 -1.5 Q -4 -5 -5.5 -2.5 Q -6 -0.5 -4 -0.5 Q -3 -1.5 -2.5 -1.5 Z" />
+                <path fill="url(#crabAmberGrad)" d="M2.5 -1.5 Q 4 -5 5.5 -2.5 Q 6 -0.5 4 -0.5 Q 3 -1.5 2.5 -1.5 Z" />
+                <path fill="none" stroke="url(#crabAmberGrad)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" d="M -4 0 L -6 0 L -6.5 1.5 M -3.5 1.5 L -5.5 1.5 L -6 3 M -2.5 2.5 L -4.5 3 L -4 4.5 M 4 0 L 6 0 L 6.5 1.5 M 3.5 1.5 L 5.5 1.5 L 6 3 M 2.5 2.5 L 4.5 3 L 4 4.5" />
+              </g>
             </svg>
           </div>
           <div className="min-w-0">
-            <h1 className="text-sm sm:text-base font-bold text-white tracking-tight leading-none mb-1 truncate">
-              Noronha Caranguejo Amarelo
+            <h1 className="text-sm sm:text-base font-extrabold text-white tracking-tight leading-none mb-1 truncate drop-shadow-sm">
+              CarangApp
             </h1>
-            <p className="text-[9px] sm:text-[10px] text-slate-400 font-medium leading-none truncate">
-              Iniciativa de Monitoramento Participativo
+            <p className="text-[10px] sm:text-[11px] text-blue-200 font-medium leading-none truncate">
+              Ciência Cidadã em Ilhas Oceânicas
             </p>
           </div>
         </div>
 
         {/* Theme Selector UI */}
-        <div className="flex items-center gap-1 bg-slate-950/80 p-0.5 rounded-lg border border-slate-800 shrink-0">
+        <div className="flex items-center gap-1 bg-blue-950/80 p-0.5 rounded-lg border border-blue-800/80 shrink-0 shadow-inner">
           <button 
             type="button"
             onClick={() => onThemeChange('light')}
-            className={`px-1.5 py-1 text-[11px] rounded font-bold flex items-center transition-colors ${theme === 'light' ? 'bg-slate-800 text-amber-400' : 'text-slate-400 hover:text-slate-200'}`}
+            className={`px-1.5 py-1 text-[11px] rounded font-bold flex items-center transition-all ${theme === 'light' ? 'bg-blue-800 text-amber-300 shadow-sm' : 'text-blue-300 hover:text-white'}`}
             title="Modo Claro"
           >
             <span>☀️</span>
@@ -100,7 +102,7 @@ const Header: React.FC<HeaderProps> = ({ theme, onThemeChange }) => {
           <button 
             type="button"
             onClick={() => onThemeChange('dark')}
-            className={`px-1.5 py-1 text-[11px] rounded font-bold flex items-center transition-colors ${theme === 'dark' ? 'bg-slate-800 text-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
+            className={`px-1.5 py-1 text-[11px] rounded font-bold flex items-center transition-all ${theme === 'dark' ? 'bg-blue-800 text-blue-100 shadow-sm' : 'text-blue-300 hover:text-white'}`}
             title="Modo Noturno"
           >
             <span>🌙</span>
@@ -108,7 +110,7 @@ const Header: React.FC<HeaderProps> = ({ theme, onThemeChange }) => {
           <button 
             type="button"
             onClick={() => onThemeChange('red')}
-            className={`px-1.5 py-1 text-[11px] rounded font-bold flex items-center transition-colors ${theme === 'red' ? 'bg-slate-800 text-red-500' : 'text-slate-400 hover:text-slate-200'}`}
+            className={`px-1.5 py-1 text-[11px] rounded font-bold flex items-center transition-all ${theme === 'red' ? 'bg-blue-800 text-red-500 shadow-sm' : 'text-blue-300 hover:text-white'}`}
             title="Noturno Vermelho"
           >
             <span>🔴</span>

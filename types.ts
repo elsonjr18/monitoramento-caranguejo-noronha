@@ -36,13 +36,12 @@ export enum CrabSizeClass {
 export enum CountType {
   EXACT = 'Contagem exata',
   ESTIMATED = 'Aproximadamente',
-  MANY = 'Muitos (numerosos)',
   NOT_COUNTED = 'Não consegui contar'
 }
 
 export enum CrabMovementPattern {
   ANDANDO = 'Andando',
-  PARADO_ATIVO = 'Parado no mesmo lugar, mas ativo',
+  PARADO_ATIVO = 'Sem deslocamento, mas ativos',
   TOTALMENTE_PARADO = 'Totalmente parado',
   NAO_OBSERVADO = 'Não consegui observar'
 }
@@ -72,9 +71,64 @@ export interface GeoLocation {
   isFromDevice?: boolean;
 }
 
-export interface ObservationData {
+export type ObservationMode = 'individual' | 'group';
+
+export type ObservationIsland = 
+  | 'Fernando de Noronha'
+  | 'Atol das Rocas'
+  | 'Ilha da Trindade'
+  | 'Ilha de Ascensão';
+
+export interface GroupObservationData {
+  totalIndividuals: number;
+
+  maleCount: number;
+  femaleCount: number;
+  sexUnknownCount: number;
+
+  ovigerousFemaleCount: number;
+  nonOvigerousFemaleCount: number;
+  eggVisibilityUnknownCount: number;
+
+  smallCount: number;
+  mediumCount: number;
+  largeCount: number;
+  sizeUnknownCount: number;
+
+  aliveCount: number;
+  injuredRoadkillCount: number;
+  deadRoadkillCount: number;
+  deadOtherCount: number;
+  statusUnknownCount: number;
+
+  orangeCrabCount: number;
+  yellowCrabCount: number;
+  purpleCrabCount: number;
+  otherColorCrabCount: number;
+  unknownColorCrabCount: number;
+
+  movingCount: number;
+  stationaryActiveCount: number;
+  totallyStillCount: number;
+  movementUnknownCount: number;
+
+  feedingCount: number;
+  diggingCount: number;
+  groomingCount: number;
+  interactionCount: number;
+  copulationCount: number;
+  otherActivityCount: number;
+  activityUnknownCount: number;
+
+  groupContext: string;
+  groupContextNotes?: string;
+}
+
+export interface ObservationData extends Partial<GroupObservationData> {
   id?: string;
   localId?: string;
+  observationMode?: ObservationMode;
+  island: ObservationIsland;
   timestamp: string;
   timestampISO?: string;
   location: GeoLocation | null;

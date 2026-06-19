@@ -1,7 +1,7 @@
 {
-  "name": "Monitoramento do Caranguejo-Amarelo",
-  "short_name": "Caranguejo",
-  "description": "Ciência Cidadã para preservação do Caranguejo Amarelo em Fernando de Noronha.",
+  "name": "CarangApp — Ciência Cidadã em Ilhas Oceânicas",
+  "short_name": "CarangApp",
+  "description": "Ciência Cidadã para preservação do Caranguejo Amarelo (Johngarthia lagostoma) em ilhas oceânicas.",
   "icons": [
     {
       "src": "/icon.svg",

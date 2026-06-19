@@ -1,7 +1,9 @@
-import { CrabColor, CrabStatus } from '../types';
+import { CrabColor, CrabStatus, ObservationMode, GroupObservationData } from '../types';
 
-export interface OfflineRecord {
+export interface OfflineRecord extends Partial<GroupObservationData> {
   id: string;
+  observationMode?: ObservationMode;
+  island?: string;
   timestamp: string;
   timestampISO: string;
   location: {

@@ -94,17 +94,23 @@ function doPost(e) {
     }
     
     // Verifica Duplicidade usando o cabeçalho 'ID do registro'
-    if (verificarDuplicidade(sheet, headerRow, registroID)) {
-      return criarRespostaJson({
-        success: true,
-        duplicate: true,
-        message: "Registro já recebido anteriormente.",
-        id: registroID
-      });
+    var existingRowIndex = obterLinhaExistente(sheet, headerRow, registroID);
+    var photoInfo = { id: "", url: "" };
+    
+    // Se a linha já existe, pegamos a foto original dela para não duplicar no Drive
+    if (existingRowIndex > -1) {
+      for (var i = 0; i < headerRow.length; i++) {
+        var n = normalizar((headerRow[i] || "").trim());
+        if (n === "urldafotografia" || n === "urldafotogra" || n === "url") {
+          photoInfo.url = sheet.getRange(existingRowIndex, i + 1).getValue();
+        }
+        if (n === "iddafotografianodrive" || n === "iddafotogra" || n === "iddrive") {
+          photoInfo.id = sheet.getRange(existingRowIndex, i + 1).getValue();
+        }
+      }
     }
     
-    var photoInfo = { id: "", url: "" };
-    if (payload.base64Data && config.DRIVE_FOLDER_ID) {
+    if (!photoInfo.url && payload.base64Data && config.DRIVE_FOLDER_ID) {
       try {
         var base64Decoded = Utilities.base64Decode(payload.base64Data);
         var blob = Utilities.newBlob(base64Decoded, payload.mimeType || 'image/jpeg', payload.fileName || ('Crab_' + registroID + '.jpg'));
@@ -125,8 +131,12 @@ function doPost(e) {
     // Cria um dicionário com os valores mapeados para chaves simplificadas (tudo minúsculo, sem acentos, sem espaços)
     var dadosMapeados = {};
     
+    var isGroup = payload.observationMode === "group";
+    var msgColetiva = "Composição coletiva — consultar colunas específicas";
+
     dadosMapeados["dataderecebimento"] = dataRecebimento;
     dadosMapeados["iddoregistro"] = registroID;
+    dadosMapeados["ilha"] = payload.island || "Fernando de Noronha"; // Padrão caso não enviado
     dadosMapeados["dataehoraexibida"] = payload.timestamp || "";
     dadosMapeados["dataehoraiso"] = payload.timestampISO || "";
     dadosMapeados["datadoavistamento"] = payload.timestamp ? payload.timestamp.split(' ')[0] : "";
@@ -141,18 +151,64 @@ function doPost(e) {
     dadosMapeados["urldafotografia"] = photoInfo.url || "";
     dadosMapeados["iddafotografianodrive"] = photoInfo.id || "";
     dadosMapeados["nomedoarquivodafotografia"] = payload.fileName || "";
-    dadosMapeados["estadodoanimal"] = payload.statusLabel || payload.status || "";
-    dadosMapeados["corpredominante"] = payload.color || "";
-    dadosMapeados["ovosvisiveis"] = payload.eggVisibility || "";
+    
+    dadosMapeados["tipoderegistro"] = isGroup ? "Coletivo" : "Individual";
+    dadosMapeados["totaldeindividuos"] = payload.totalIndividuals || payload.amount || "1";
     dadosMapeados["quantidade"] = payload.amount || "1";
     dadosMapeados["tipodecontagem"] = payload.countType || "";
     dadosMapeados["ambiente"] = payload.habitat || "";
-    dadosMapeados["sexo"] = payload.sex || "";
-    dadosMapeados["classedetamanho"] = payload.sizeClass || "";
+
+    dadosMapeados["estadodoanimal"] = isGroup ? msgColetiva : (payload.statusLabel || payload.status || "");
+    dadosMapeados["corpredominante"] = isGroup ? msgColetiva : (payload.color || "");
+    dadosMapeados["ovosvisiveis"] = isGroup ? msgColetiva : (payload.eggVisibility || "");
+    dadosMapeados["sexo"] = isGroup ? msgColetiva : (payload.sex || "");
+    dadosMapeados["classedetamanho"] = isGroup ? msgColetiva : (payload.sizeClass || "");
+    dadosMapeados["padraodemovimento"] = isGroup ? msgColetiva : (payload.movementPatternLabel || payload.movementPattern || "");
+    dadosMapeados["atividadeobservada"] = isGroup ? msgColetiva : (payload.activityLabel || payload.activity || "");
+    dadosMapeados["comportamentocombinado"] = isGroup ? msgColetiva : (payload.behaviorLabel || payload.behavior || "");
     
-    dadosMapeados["padraodemovimento"] = payload.movementPatternLabel || payload.movementPattern || "";
-    dadosMapeados["atividadeobservada"] = payload.activityLabel || payload.activity || "";
-    dadosMapeados["comportamentocombinado"] = payload.behaviorLabel || payload.behavior || "";
+    // Group Observation Fields
+    dadosMapeados["machos"] = payload.maleCount !== undefined ? payload.maleCount : "";
+    dadosMapeados["femeas"] = payload.femaleCount !== undefined ? payload.femaleCount : "";
+    dadosMapeados["sexonaoidentificado"] = payload.sexUnknownCount !== undefined ? payload.sexUnknownCount : "";
+
+    dadosMapeados["femeasovigeras"] = payload.ovigerousFemaleCount !== undefined ? payload.ovigerousFemaleCount : "";
+    dadosMapeados["femeassemovosvisiveis"] = payload.nonOvigerousFemaleCount !== undefined ? payload.nonOvigerousFemaleCount : "";
+    dadosMapeados["ovosnaoobservados"] = payload.eggVisibilityUnknownCount !== undefined ? payload.eggVisibilityUnknownCount : "";
+
+    dadosMapeados["individuospequenos"] = payload.smallCount !== undefined ? payload.smallCount : "";
+    dadosMapeados["individuosmedios"] = payload.mediumCount !== undefined ? payload.mediumCount : "";
+    dadosMapeados["individuosgrandes"] = payload.largeCount !== undefined ? payload.largeCount : "";
+    dadosMapeados["tamanhonaoidentificado"] = payload.sizeUnknownCount !== undefined ? payload.sizeUnknownCount : "";
+
+    dadosMapeados["individuosvivos"] = payload.aliveCount !== undefined ? payload.aliveCount : "";
+    dadosMapeados["atropeladosvivos"] = payload.injuredRoadkillCount !== undefined ? payload.injuredRoadkillCount : "";
+    dadosMapeados["atropeladosmortos"] = payload.deadRoadkillCount !== undefined ? payload.deadRoadkillCount : "";
+    dadosMapeados["mortossematropelamentoidentificado"] = payload.deadOtherCount !== undefined ? payload.deadOtherCount : "";
+    dadosMapeados["estadonaoidentificado"] = payload.statusUnknownCount !== undefined ? payload.statusUnknownCount : "";
+
+    dadosMapeados["individuoslaranjaouavermelhados"] = payload.orangeCrabCount !== undefined ? payload.orangeCrabCount : "";
+    dadosMapeados["individuosamarelos"] = payload.yellowCrabCount !== undefined ? payload.yellowCrabCount : "";
+    dadosMapeados["individuosroxosouescuros"] = payload.purpleCrabCount !== undefined ? payload.purpleCrabCount : "";
+    dadosMapeados["individuoscomoutracor"] = payload.otherColorCrabCount !== undefined ? payload.otherColorCrabCount : "";
+    dadosMapeados["cornaoidentificada"] = payload.unknownColorCrabCount !== undefined ? payload.unknownColorCrabCount : "";
+
+    dadosMapeados["individuoscomdeslocamento"] = payload.movingCount !== undefined ? payload.movingCount : "";
+    dadosMapeados["individuossemsemovermasativos"] = payload.stationaryActiveCount !== undefined ? payload.stationaryActiveCount : "";
+    dadosMapeados["individuostotalmenteparados"] = payload.totallyStillCount !== undefined ? payload.totallyStillCount : "";
+    dadosMapeados["movimentonaoobservado"] = payload.movementUnknownCount !== undefined ? payload.movementUnknownCount : "";
+
+    dadosMapeados["individuosalimentandose"] = payload.feedingCount !== undefined ? payload.feedingCount : "";
+    dadosMapeados["individuoscavando"] = payload.diggingCount !== undefined ? payload.diggingCount : "";
+    dadosMapeados["individuoslimpandoquelasoupatas"] = payload.groomingCount !== undefined ? payload.groomingCount : "";
+    dadosMapeados["individuoseminteracao"] = payload.interactionCount !== undefined ? payload.interactionCount : "";
+    dadosMapeados["individuosemcopula"] = payload.copulationCount !== undefined ? payload.copulationCount : "";
+    dadosMapeados["individuosemoutraatividade"] = payload.otherActivityCount !== undefined ? payload.otherActivityCount : "";
+    dadosMapeados["atividadenaoidentificada"] = payload.activityUnknownCount !== undefined ? payload.activityUnknownCount : "";
+
+    dadosMapeados["contextocoletivodaobservacao"] = payload.groupContext || "";
+    dadosMapeados["observacoesdocontextocoletivo"] = payload.groupContextNotes || "";
+    dadosMapeados["resumodaobservacaocoletiva"] = payload.groupSummary || "";
     
     dadosMapeados["riscodeatropelamento"] = payload.collisionRisk || "";
     dadosMapeados["condicaodotempo"] = payload.weather || "";
@@ -203,14 +259,22 @@ function doPost(e) {
         novaLinha.push(valorResolvido);
     }
     
-    // Anexa a nova linha
-    sheet.appendRow(novaLinha);
-    var rowNum = sheet.getLastRow();
+    var rowNum;
+    if (existingRowIndex > -1) {
+      // Atualiza a linha existente
+      sheet.getRange(existingRowIndex, 1, 1, novaLinha.length).setValues([novaLinha]);
+      rowNum = existingRowIndex;
+    } else {
+      // Anexa a nova linha
+      sheet.appendRow(novaLinha);
+      rowNum = sheet.getLastRow();
+    }
     
     return criarRespostaJson({
       success: true,
       duplicate: false,
-      message: "Registro salvo com sucesso.",
+      updated: existingRowIndex > -1,
+      message: existingRowIndex > -1 ? "Registro atualizado com sucesso." : "Registro salvo com sucesso.",
       id: registroID,
       photoId: photoInfo.id,
       photoUrl: photoInfo.url,
@@ -239,8 +303,7 @@ function criarRespostaJson(obj) {
   return saida;
 }
 
-// Função auxiliar para rodar manualmente e configurar a tela
-function forcarCriacaoDeCabecalhos() {
+function migrarPlanilha() {
   var config = obterConfiguracoes();
   if (!config.SPREADSHEET_ID) {
     throw new Error("Coloque o ID da planilha nas configurações primeiro!");
@@ -250,17 +313,61 @@ function forcarCriacaoDeCabecalhos() {
   if (!sheet) {
     sheet = ss.insertSheet(config.SHEET_NAME);
   }
-  inicializarCabecalhos(sheet);
+  
+  var cabecalhos = inicializarCabecalhos(null, true);
+  var maxCol = Math.max(sheet.getLastColumn(), 1);
+  var headerRow = [];
+  if (maxCol > 0) {
+    headerRow = sheet.getRange(1, 1, 1, maxCol).getValues()[0];
+  }
+  
+  var headersAdicionados = false;
+  function temCabecalho(esperado) {
+    var normEsperado = normalizar(esperado);
+    for (var j = 0; j < headerRow.length; j++) {
+      var hl = normalizar(headerRow[j] || "");
+      if (hl === normEsperado) return true;
+    }
+    return false;
+  }
+  
+  for (var i = 0; i < cabecalhos.length; i++) {
+    if (!temCabecalho(cabecalhos[i])) {
+      headerRow.push(cabecalhos[i]);
+      headersAdicionados = true;
+    }
+  }
+  
+  if (headersAdicionados) {
+    sheet.getRange(1, 1, 1, headerRow.length).setValues([headerRow]);
+    sheet.getRange(1, 1, 1, headerRow.length).setFontWeight("bold");
+    try { sheet.setFrozenRows(1); } catch (e) {}
+  }
+}
+
+// Função auxiliar para rodar manualmente e configurar a tela
+function forcarCriacaoDeCabecalhos() {
+  migrarPlanilha();
 }
 
 function inicializarCabecalhos(sheet, apenasRetornar) {
   var cabecalhosEsperados = [
-    "Data de recebimento", "ID do registro", "Data e hora exibida", "Data e hora ISO", "Data do avistamento",
+    "Data de recebimento", "ID do registro", "Ilha", "Tipo de registro", "Total de indivíduos", 
+    "Data e hora exibida", "Data e hora ISO", "Data do avistamento",
     "Dia da semana", "Período do dia", "Latitude", "Longitude", "Precisão GPS em metros", "Fonte da localização",
     "Localização extraída da foto", "Localização obtida pelo aparelho", "URL da fotografia", "ID da fotografia no Drive",
     "Nome do arquivo da fotografia", "Estado do animal", "Cor predominante", "Ovos visíveis", "Quantidade",
     "Tipo de contagem", "Ambiente", "Sexo", "Classe de tamanho", "Padrão de movimento", "Atividade observada",
-    "Comportamento combinado", "Risco de atropelamento", "Condição do tempo", "Observações", "Fase lunar",
+    "Comportamento combinado", 
+    "Machos", "Fêmeas", "Sexo não identificado",
+    "Fêmeas ovígeras", "Fêmeas sem ovos visíveis", "Ovos não observados",
+    "Indivíduos pequenos", "Indivíduos médios", "Indivíduos grandes", "Tamanho não identificado",
+    "Indivíduos vivos", "Atropelados vivos", "Atropelados mortos", "Mortos sem atropelamento identificado", "Estado não identificado",
+    "Indivíduos laranja ou avermelhados", "Indivíduos amarelos", "Indivíduos roxos ou escuros", "Indivíduos com outra cor", "Cor não identificada",
+    "Indivíduos com deslocamento", "Indivíduos sem se mover, mas ativos", "Indivíduos totalmente parados", "Movimento não observado",
+    "Indivíduos alimentando-se", "Indivíduos cavando", "Indivíduos limpando quelas ou patas", "Indivíduos em interação", "Indivíduos em cópula", "Indivíduos em outra atividade", "Atividade não identificada",
+    "Contexto coletivo da observação", "Observações do contexto coletivo", "Resumo da observação coletiva",
+    "Risco de atropelamento", "Condição do tempo", "Observações", "Fase lunar",
     "Idade lunar", "Iluminação lunar", "Dispositivo e navegador", "Status do processamento"
   ];
   
@@ -275,9 +382,9 @@ function inicializarCabecalhos(sheet, apenasRetornar) {
   return cabecalhosEsperados;
 }
 
-function verificarDuplicidade(sheet, headerRow, id) {
+function obterLinhaExistente(sheet, headerRow, id) {
   var urlLastRow = sheet.getLastRow();
-  if (urlLastRow < 2) return false;
+  if (urlLastRow < 2) return -1;
   
   var idColIndex = -1;
   for (var i = 0; i < headerRow.length; i++) {
@@ -288,15 +395,15 @@ function verificarDuplicidade(sheet, headerRow, id) {
      }
   }
   
-  if (idColIndex === -1) return false;
+  if (idColIndex === -1) return -1;
   
   var ids = sheet.getRange(2, idColIndex, urlLastRow - 1, 1).getValues();
   for (var i = 0; i < ids.length; i++) {
     if (ids[i][0] == id) {
-      return true;
+      return i + 2; // Linha real (0-based array + 2)
     }
   }
-  return false;
+  return -1;
 }
 
 function normalizar(texto) {

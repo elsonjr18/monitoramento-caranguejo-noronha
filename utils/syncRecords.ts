@@ -48,7 +48,7 @@ export function getMovementPatternLabel(pattern: string): string {
 
     case 'SEM_DESLOCAMENTO_ATIVO':
     case 'PARADO_ATIVO':
-      return 'Sem deslocamento, mas ativo';
+      return 'Sem deslocamento, mas ativos';
 
     case 'PARADO_INATIVO':
     case 'TOTALMENTE_PARADO':
@@ -100,7 +100,7 @@ export function getStatusLabel(status: string): string {
     case 'FERIDO':
     case 'FERIDO / ATROPELADO VIVO':
     case 'ATROPELADO (MACHUCADO)':
-      return 'Ferido / Atropelado vivo';
+      return 'Atropelado vivo';
 
     case 'ATROPELADO_MORTO':
     case 'ATROPELADO MORTO':
@@ -240,6 +240,9 @@ function normalizeRecordPayload(record: any) {
       : movementPattern || activity || ''
   );
 
+  const observationMode = record.observationMode || 'individual';
+  const totalIndividuals = observationMode === 'group' ? (record.totalIndividuals || record.amount || 1) : 1;
+
   return {
     localId: safeId,
     id: safeId,
@@ -263,10 +266,59 @@ function normalizeRecordPayload(record: any) {
     status: record.status || '',
     statusLabel: getStatusLabel(record.status || ''),
     eggVisibility: record.eggVisibility || '',
+    
+    island: record.island || 'Fernando de Noronha',
 
-    amount: record.amount !== undefined && record.amount !== null && record.amount !== ''
-      ? record.amount
-      : 1,
+    observationMode,
+    totalIndividuals,
+
+    // Group Observation Fields
+    maleCount: record.maleCount || 0,
+    femaleCount: record.femaleCount || 0,
+    sexUnknownCount: record.sexUnknownCount || 0,
+
+    ovigerousFemaleCount: record.ovigerousFemaleCount || 0,
+    nonOvigerousFemaleCount: record.nonOvigerousFemaleCount || 0,
+    eggVisibilityUnknownCount: record.eggVisibilityUnknownCount || 0,
+
+    smallCount: record.smallCount || 0,
+    mediumCount: record.mediumCount || 0,
+    largeCount: record.largeCount || 0,
+    sizeUnknownCount: record.sizeUnknownCount || 0,
+
+    aliveCount: record.aliveCount || 0,
+    injuredRoadkillCount: record.injuredRoadkillCount || 0,
+    deadRoadkillCount: record.deadRoadkillCount || 0,
+    deadOtherCount: record.deadOtherCount || 0,
+    statusUnknownCount: record.statusUnknownCount || 0,
+
+    orangeCrabCount: record.orangeCrabCount || 0,
+    yellowCrabCount: record.yellowCrabCount || 0,
+    purpleCrabCount: record.purpleCrabCount || 0,
+    otherColorCrabCount: record.otherColorCrabCount || 0,
+    unknownColorCrabCount: record.unknownColorCrabCount || 0,
+
+    movingCount: record.movingCount || 0,
+    stationaryActiveCount: record.stationaryActiveCount || 0,
+    totallyStillCount: record.totallyStillCount || 0,
+    movementUnknownCount: record.movementUnknownCount || 0,
+
+    feedingCount: record.feedingCount || 0,
+    diggingCount: record.diggingCount || 0,
+    groomingCount: record.groomingCount || 0,
+    interactionCount: record.interactionCount || 0,
+    copulationCount: record.copulationCount || 0,
+    otherActivityCount: record.otherActivityCount || 0,
+    activityUnknownCount: record.activityUnknownCount || 0,
+
+    groupContext: record.groupContext || '',
+    groupContextNotes: record.groupContextNotes || '',
+    groupSummary: record.groupSummary || (observationMode === 'group' 
+      ? `Total: ${totalIndividuals}; Machos: ${record.maleCount || 0}; Fêmeas: ${record.femaleCount || 0}; Sexo não identificado: ${record.sexUnknownCount || 0}; Ovígeras: ${record.ovigerousFemaleCount || 0}; Vivos: ${record.aliveCount || 0}; Atropelados mortos: ${record.deadRoadkillCount || 0}; Com deslocamento: ${record.movingCount || 0}; Alimentando-se: ${record.feedingCount || 0}; Contexto: ${record.groupContext || ''}` 
+      : ''),
+
+    // Keep individual amount/countType for compatibility mode
+    amount: observationMode === 'group' ? totalIndividuals : 1,
     countType: record.countType || '',
     habitat: record.habitat || '',
     sex: record.sex || '',

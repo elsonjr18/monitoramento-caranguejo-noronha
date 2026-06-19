@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
-    <title>Monitoramento Caranguejo Noronha</title>
-    <meta name="description" content="Monitoramento do Caranguejo Amarelo em Fernando de Noronha" />
+    <title>CarangApp — Ciência Cidadã em Ilhas Oceânicas</title>
+    <meta name="description" content="CarangApp — Monitoramento Participativo em Ilhas Oceânicas" />
     <meta name="theme-color" content="#0f172a" />
     
     <!-- PWA Manifest & App Icons -->
@@ -12,7 +12,7 @@
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="apple-touch-icon" href="/icon.svg" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="CrabNoronha" />
+    <meta name="apple-mobile-web-app-title" content="CarangApp" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -20,24 +20,59 @@
         theme: {
           extend: {
             colors: {
-              sand: {
-                50: '#fdfbf7',
-                100: '#f7f3e6',
-                200: '#ece4c4',
-                300: '#decf9b',
-                400: '#d0b670',
-                500: '#c59d4e',
+              slate: {
+                50: '#FDFCF8',
+                100: '#F8F5EE',
+                200: '#EDE5D6',
+                300: '#DED1B8',
+                400: '#CFC0A2',
+                500: '#BBAA88',
+                600: '#A4916B',
+                700: '#8A7A5D',
+                800: '#695C48',
+                900: '#4D4336',
+                950: '#2A241B',
               },
-              ocean: {
-                800: '#1e3a8a',
-                900: '#0f172a',
+              orange: {
+                50: '#FFF9EA',
+                100: '#FFF0C5',
+                200: '#FFE085',
+                300: '#FFCD46',
+                400: '#FFB81B',
+                500: '#F59E0B', 
+                600: '#D97706',
+                700: '#B45309',
+                800: '#92400E',
+                900: '#78350F',
+                950: '#451A03',
               },
-              crab: {
-                500: '#f97316',
-                600: '#ea580c',
+              blue: {
+                50: '#EFFFFE',
+                100: '#CDFEFD',
+                200: '#9DFCFB',
+                300: '#5DF6F8',
+                400: '#1DE4EC',
+                500: '#00C6D1',
+                600: '#00A0AE',
+                700: '#007F8E',
+                800: '#066370',
+                900: '#0A525E',
+                950: '#033640',
+              },
+              nature: {
+                50: '#F0F9F6',
+                100: '#D5F0E3',
+                200: '#AEE1CC',
+                300: '#7ECBAE',
+                400: '#53B08E',
+                500: '#349373',
+                600: '#26765A',
+                700: '#205E49',
+                800: '#1B4A3A',
+                900: '#163D31',
+                950: '#0C221D',
               }
             }
-          }
         }
       }
     </script>
@@ -47,15 +82,15 @@
         width: 6px;
       }
       ::-webkit-scrollbar-track {
-        background: #f7f3e6;
+        background: #FDFCF8;
       }
       ::-webkit-scrollbar-thumb {
-        background: #d0b670;
+        background: #BBAA88;
         border-radius: 3px;
       }
       body {
         -webkit-tap-highlight-color: transparent;
-        background-color: #f7f3e6;
+        background-color: #F8F5EE;
       }
     </style>
   <script type="importmap">

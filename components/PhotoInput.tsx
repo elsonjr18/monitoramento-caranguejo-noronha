@@ -109,7 +109,7 @@ const PhotoInput: React.FC<PhotoInputProps> = ({ photoUrl, onPhotoCapture, theme
           <span className={`p-1.5 rounded-lg mr-2.5 shrink-0 ${isLight ? 'bg-orange-100 text-orange-600' : isDark ? 'bg-orange-950 text-orange-400' : 'bg-red-950/30 text-red-500'}`}>
             <Camera className="h-5 w-5" />
           </span>
-          Foto do Caranguejo
+          Foto do(s) Caranguejo(s)
         </h3>
         
         {photoUrl && (
