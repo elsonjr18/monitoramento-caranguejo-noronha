@@ -1,23 +1,18 @@
+
 {
   "name": "CarangApp — Ciência Cidadã em Ilhas Oceânicas",
   "short_name": "CarangApp",
   "description": "Ciência Cidadã para preservação do Caranguejo Amarelo (Johngarthia lagostoma) em ilhas oceânicas.",
+  "start_url": "/monitoramento-caranguejo-noronha/",
+  "scope": "/monitoramento-caranguejo-noronha/",
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "icon.svg",
       "type": "image/svg+xml",
       "sizes": "any",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon.svg",
-      "type": "image/svg+xml",
-      "sizes": "512x512",
       "purpose": "any"
     }
   ],
-  "start_url": "/",
-  "scope": "/",
   "background_color": "#f8fafc",
   "theme_color": "#ea580c",
   "display": "standalone",
